@@ -1466,7 +1466,7 @@ module ApplicationHelper
     #     loadMap3( );
     #     *** the code that creates and uses maps ***
     #   } )
-
+    region = cctld_from_locale( I18n.locale )
     raw <<-HTML
       <script type="text/javascript">
         (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",
@@ -1480,7 +1480,8 @@ module ApplicationHelper
           d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)
           &&u().then(()=>d[l](f,...n))})({
           key: "#{CONFIG.google.browser_api_key}",
-          v: "weekly"
+          v: "weekly",
+          region: "#{region}",
         });
       </script>
     HTML
@@ -1499,10 +1500,16 @@ module ApplicationHelper
     }.to_query
   end
 
+  def region_from_browser
+    request.env["HTTP_ACCEPT_LANGUAGE"]&.scan( /[a-z]{2}-[A-Z]{2}/ )&.first&.downcase
+  end
+
   # Mostly for Google API regions
   def cctld_from_locale( locale )
     # return "il" if locale.to_s == "he"
-    return if locale.to_s.split( "-" ).size < 2
+    if locale.to_s.split( "-" ).size < 2
+      locale = region_from_browser
+    end
 
     region = locale.to_s.split( "-" ).last
     case region
